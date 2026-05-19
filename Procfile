@@ -1,0 +1,1 @@
+web: gunicorn daily_servant_config.wsgi
