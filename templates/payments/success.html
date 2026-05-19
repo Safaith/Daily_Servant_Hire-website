@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Payment Successful - Daily Servant{% endblock %}
+{% block extra_css %}
+<style>
+.success-wrapper{min-height:calc(100vh - 72px);display:flex;align-items:center;justify-content:center;padding:2rem;background:linear-gradient(135deg,#f0fdfa,var(--cream))}
+.success-card{background:white;border-radius:24px;box-shadow:var(--shadow-lg);padding:3rem;max-width:520px;width:100%;text-align:center}
+.success-icon{width:100px;height:100px;background:linear-gradient(135deg,#10b981,#059669);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3rem;margin:0 auto 1.5rem;animation:pop .5s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.tx-box{background:var(--cream);border-radius:14px;padding:1.25rem;margin:1.5rem 0;text-align:left}
+.tx-row{display:flex;justify-content:space-between;font-size:.875rem;margin-bottom:.5rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.tx-row:last-child{border-bottom:none;font-weight:700;color:var(--emerald)}
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+</style>
+{% endblock %}
+{% block content %}
+<canvas class="confetti" id="confetti"></canvas>
+<div class="success-wrapper">
+    <div class="success-card" style="position:relative;z-index:1">
+        <div class="success-icon">✅</div>
+        <h1 style="font-family:'Playfair Display',serif;font-size:2rem;margin-bottom:.5rem">Payment Successful!</h1>
+        <p style="color:var(--muted);margin-bottom:1rem">পেমেন্ট সফল হয়েছে! Your booking is now confirmed.</p>
+
+        {% if payment %}
+        <div class="tx-box">
+            <div class="tx-row"><span>Transaction ID</span><strong>{{ payment.transaction_id }}</strong></div>
+            <div class="tx-row"><span>Method</span><strong>{{ payment.get_method_display }}</strong></div>
+            <div class="tx-row"><span>Servant</span><strong>{{ booking.servant.user.get_full_name }}</strong></div>
+            <div class="tx-row"><span>Service Date</span><strong>{{ booking.service_date|date:"d M Y" }}</strong></div>
+            <div class="tx-row"><span>Amount Paid</span><strong>৳{{ payment.amount }}</strong></div>
+        </div>
+        {% endif %}
+
+        <p style="font-size:.875rem;color:var(--muted);margin-bottom:1.5rem">
+            The servant has been notified. Please be available at your address on the service date.
+        </p>
+        <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
+            <a href="/bookings/hirer-dashboard/" class="btn btn-primary"><i class="fas fa-calendar-check"></i> My Bookings</a>
+            <a href="/servants/" class="btn btn-outline"><i class="fas fa-search"></i> Book Again</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+// Simple confetti animation
+const canvas = document.getElementById('confetti');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+const pieces = Array.from({length:120},()=>({
+    x:Math.random()*canvas.width, y:Math.random()*canvas.height-canvas.height,
+    r:Math.random()*6+4, d:Math.random()*120+80,
+    color:`hsl(${Math.random()*360},70%,60%)`,
+    tilt:Math.floor(Math.random()*10)-10, tiltAngleIncrement:Math.random()*.07+.05,
+    tiltAngle:0, angle:Math.random()*Math.PI*2
+}));
+let frame=0;
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{
+        p.tiltAngle+=p.tiltAngleIncrement;
+        p.y+=(Math.cos(p.angle+p.d/10)+1+p.r/5)*1.5;
+        p.x+=Math.sin(p.angle); p.angle+=.01;
+        p.tilt=Math.sin(p.tiltAngle)*12;
+        ctx.beginPath(); ctx.lineWidth=p.r;
+        ctx.strokeStyle=p.color;
+        ctx.moveTo(p.x+p.tilt+p.r/3,p.y);
+        ctx.lineTo(p.x+p.tilt,p.y+p.tilt+p.r/5);
+        ctx.stroke();
+        if(p.y>canvas.height) p.y=-20;
+    });
+    frame++;
+    if(frame<300) requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+draw();
+</script>
+{% endblock %}

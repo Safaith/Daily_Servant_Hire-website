@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Payment - Daily Servant{% endblock %}
+{% block extra_css %}
+<style>
+.pay-wrapper{max-width:800px;margin:3rem auto;padding:0 1.5rem;display:grid;grid-template-columns:1fr 280px;gap:2rem}
+.pay-card{background:white;border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.pay-header{background:linear-gradient(135deg,var(--emerald-dark),#134e4a);padding:2rem;color:white}
+.pay-header h1{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:.25rem}
+.pay-body{padding:2rem}
+.methods{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:2rem}
+.method-btn{border:2px solid var(--border);border-radius:14px;padding:1rem;cursor:pointer;text-align:center;transition:all .2s;background:white;display:flex;flex-direction:column;align-items:center;gap:.4rem}
+.method-btn:hover{border-color:var(--emerald)}
+.method-btn.selected{border-color:var(--emerald);background:rgba(13,148,136,.05)}
+.method-btn .icon{font-size:2rem}
+.method-btn .name{font-weight:700;font-size:.85rem}
+.method-btn .desc{font-size:.72rem;color:var(--muted)}
+.otp-section{display:none;background:rgba(13,148,136,.05);border:2px solid rgba(13,148,136,.2);border-radius:14px;padding:1.5rem;margin-top:1.5rem}
+.otp-input{width:100%;font-size:2rem;text-align:center;letter-spacing:.5rem;border:2px solid var(--border);border-radius:12px;padding:1rem;font-family:'Playfair Display',serif;font-weight:700}
+.otp-input:focus{outline:none;border-color:var(--emerald)}
+.summary-card{background:white;border-radius:20px;box-shadow:var(--shadow);padding:1.75rem;height:fit-content;position:sticky;top:88px}
+.summary-row{display:flex;justify-content:space-between;font-size:.875rem;margin-bottom:.6rem;padding-bottom:.6rem;border-bottom:1px solid var(--border)}
+.summary-row:last-child{border-bottom:none;font-weight:700;font-size:1rem;color:var(--emerald)}
+@media(max-width:700px){.pay-wrapper{grid-template-columns:1fr}.summary-card{position:static}.methods{grid-template-columns:1fr 1fr}}
+</style>
+{% endblock %}
+{% block content %}
+<div style="background:linear-gradient(135deg,var(--emerald-dark),#134e4a);padding:3rem 2rem 2rem;color:white;text-align:center">
+    <h1 style="font-family:'Playfair Display',serif;font-size:2.2rem">Secure Payment</h1>
+    <p style="opacity:.85">নিরাপদ পেমেন্ট · Pay for your booking</p>
+</div>
+<div class="pay-wrapper">
+    <div class="pay-card">
+        <div class="pay-header">
+            <h1>Choose Payment Method</h1>
+            <p style="opacity:.85">পেমেন্ট পদ্ধতি বেছে নিন</p>
+        </div>
+        <div class="pay-body">
+            {% if payment and payment.status == 'completed' %}
+            <div style="text-align:center;padding:2rem">
+                <div style="font-size:4rem;margin-bottom:1rem">✅</div>
+                <h2 style="font-family:'Playfair Display',serif;color:#065f46">Already Paid!</h2>
+                <p style="color:var(--muted);margin:.75rem 0">Transaction ID: <strong>{{ payment.transaction_id }}</strong></p>
+                <a href="/bookings/hirer-dashboard/" class="btn btn-primary">Back to Dashboard</a>
+            </div>
+            {% else %}
+            <p style="font-weight:700;font-size:.875rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem">Select Method</p>
+            <div class="methods">
+                <button class="method-btn" onclick="selectMethod('bkash', this)">
+                    <span class="icon">🟢</span><span class="name">bKash</span><span class="desc">Mobile banking</span>
+                </button>
+                <button class="method-btn" onclick="selectMethod('nagad', this)">
+                    <span class="icon">🟠</span><span class="name">Nagad</span><span class="desc">Mobile banking</span>
+                </button>
+                <button class="method-btn" onclick="selectMethod('rocket', this)">
+                    <span class="icon">🚀</span><span class="name">Rocket</span><span class="desc">DBBL mobile</span>
+                </button>
+                <button class="method-btn" onclick="selectMethod('cash', this)">
+                    <span class="icon">💵</span><span class="name">Cash</span><span class="desc">Pay on service day</span>
+                </button>
+            </div>
+            <input type="hidden" id="selectedMethod" value="">
+
+            <div id="phoneSection" style="display:none">
+                <div class="form-group">
+                    <label><i class="fas fa-phone" style="color:var(--emerald)"></i> Mobile Number</label>
+                    <input type="text" id="phoneInput" placeholder="01XXXXXXXXX" style="width:100%;padding:.75rem 1rem;border:2px solid var(--border);border-radius:10px;font-size:1rem;font-family:'DM Sans',sans-serif">
+                </div>
+            </div>
+
+            <button onclick="initiatePayment()" id="payBtn" class="btn btn-gold" style="width:100%;justify-content:center;padding:.875rem;font-size:1rem;display:none">
+                <i class="fas fa-lock"></i> Proceed to Pay ৳{{ booking.total_amount }}
+            </button>
+
+            <div class="otp-section" id="otpSection">
+                <h3 style="font-family:'Playfair Display',serif;margin-bottom:.5rem;color:var(--emerald-dark)">Enter OTP</h3>
+                <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem" id="otpHint">Check your phone for the OTP</p>
+                <input type="text" class="otp-input" id="otpInput" maxlength="6" placeholder="000000">
+                <button onclick="confirmPayment()" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:1rem;padding:.875rem">
+                    <i class="fas fa-check-circle"></i> Confirm Payment
+                </button>
+                <p style="text-align:center;font-size:.78rem;color:var(--muted);margin-top:.75rem">
+                    <i class="fas fa-shield-alt" style="color:var(--emerald)"></i> Demo mode — OTP shown for testing
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="summary-card">
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:1.25rem">Order Summary</h3>
+        <div class="summary-row"><span>Servant</span><strong>{{ booking.servant.user.get_full_name }}</strong></div>
+        <div class="summary-row"><span>Date</span><strong>{{ booking.service_date|date:"d M Y" }}</strong></div>
+        <div class="summary-row"><span>Service</span><strong>1 Day</strong></div>
+        <div class="summary-row"><span>Daily Rate</span><strong>৳{{ booking.total_amount }}</strong></div>
+        <div class="summary-row"><span>Platform Fee</span><strong>৳0</strong></div>
+        <div class="summary-row"><span>Total Amount</span><strong>৳{{ booking.total_amount }}</strong></div>
+        <div style="margin-top:1rem;font-size:.78rem;color:var(--muted)">
+            <i class="fas fa-shield-alt" style="color:var(--emerald)"></i> 100% secure transaction
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let currentPaymentId = null;
+
+function selectMethod(method, el) {
+    document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('selectedMethod').value = method;
+    document.getElementById('payBtn').style.display = 'flex';
+    const phoneSection = document.getElementById('phoneSection');
+    phoneSection.style.display = method !== 'cash' ? 'block' : 'none';
+}
+
+function initiatePayment() {
+    const method = document.getElementById('selectedMethod').value;
+    const phone = document.getElementById('phoneInput')?.value || '';
+    if(!method) return alert('Please select a payment method.');
+
+    fetch('/api/payments/initiate/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({booking_id: {{ booking.id }}, method, phone_number: phone})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.payment_id) {
+            currentPaymentId = data.payment_id;
+            document.getElementById('otpHint').textContent = data.otp_hint || 'Enter OTP sent to your phone';
+            document.getElementById('otpSection').style.display = 'block';
+            document.getElementById('payBtn').style.display = 'none';
+        } else {
+            alert(data.error || 'Something went wrong. Please try again.');
+        }
+    })
+    .catch(() => alert('Network error. Please try again.'));
+}
+
+function confirmPayment() {
+    const otp = document.getElementById('otpInput').value;
+    if(!otp || otp.length < 6) return alert('Please enter a valid 6-digit OTP.');
+
+    fetch('/api/payments/confirm/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({payment_id: currentPaymentId, otp})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.transaction_id) {
+            window.location.href = '/payments/{{ booking.id }}/success/';
+        } else {
+            alert(data.error || 'Invalid OTP. Please try again.');
+        }
+    })
+    .catch(() => alert('Network error. Please try again.'));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - Daily Servant{% endblock %}
+{% block extra_css %}
+<style>
+.profile-layout{max-width:900px;margin:3rem auto;padding:0 1.5rem;display:grid;grid-template-columns:280px 1fr;gap:2rem}
+.profile-sidebar{background:white;border-radius:20px;box-shadow:var(--shadow);padding:2rem;text-align:center;height:fit-content}
+.avatar-big{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),var(--emerald-dark));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:2.5rem;color:white;margin:0 auto 1rem;font-weight:700}
+.profile-name{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;margin-bottom:.25rem}
+.role-badge{display:inline-block;padding:.3rem .9rem;border-radius:20px;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.role-hirer{background:rgba(13,148,136,.1);color:var(--emerald)}
+.role-servant{background:rgba(245,158,11,.1);color:#d97706}
+.profile-detail{text-align:left;padding:.6rem 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;font-size:.875rem;color:var(--muted)}
+.profile-detail i{color:var(--emerald);width:16px}
+.profile-main{background:white;border-radius:20px;box-shadow:var(--shadow);padding:2rem}
+.profile-main h2{font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid var(--border)}
+@media(max-width:700px){.profile-layout{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+{% block content %}
+<div style="background:linear-gradient(135deg,var(--emerald-dark),#134e4a);padding:3rem 2rem 1rem;color:white;text-align:center">
+    <h1 style="font-family:'Playfair Display',serif;font-size:2rem">My Profile</h1>
+</div>
+<div class="profile-layout">
+    <div class="profile-sidebar">
+        <div class="avatar-big">{{ user.first_name|first }}{{ user.last_name|first }}</div>
+        <div class="profile-name">{{ user.get_full_name }}</div>
+        <span class="role-badge role-{{ user.role }}">{{ user.role }}</span>
+        <div style="margin-top:1.5rem">
+            {% if user.email %}<div class="profile-detail"><i class="fas fa-envelope"></i> {{ user.email }}</div>{% endif %}
+            {% if user.phone %}<div class="profile-detail"><i class="fas fa-phone"></i> {{ user.phone }}</div>{% endif %}
+            <div class="profile-detail"><i class="fas fa-calendar"></i> Joined {{ user.created_at|date:"M Y" }}</div>
+            <div class="profile-detail">
+                <i class="fas fa-shield-alt"></i>
+                {% if user.is_verified %}<span style="color:#10b981">✓ Verified</span>{% else %}Pending verification{% endif %}
+            </div>
+        </div>
+        <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:.75rem">
+            {% if user.role == 'hirer' %}
+                <a href="/bookings/hirer-dashboard/" class="btn btn-primary" style="justify-content:center"><i class="fas fa-calendar-check"></i> My Bookings</a>
+            {% elif user.role == 'servant' %}
+                <a href="/servants/dashboard/" class="btn btn-primary" style="justify-content:center"><i class="fas fa-tachometer-alt"></i> My Dashboard</a>
+            {% endif %}
+            <a href="/accounts/logout/" class="btn btn-outline" style="justify-content:center"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+    <div class="profile-main">
+        <h2>Account Information</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div><label style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase">First Name</label><p style="margin-top:.25rem;font-weight:600">{{ user.first_name|default:"—" }}</p></div>
+            <div><label style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase">Last Name</label><p style="margin-top:.25rem;font-weight:600">{{ user.last_name|default:"—" }}</p></div>
+            <div><label style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase">Username</label><p style="margin-top:.25rem;font-weight:600">{{ user.username }}</p></div>
+            <div><label style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase">Role</label><p style="margin-top:.25rem;font-weight:600;text-transform:capitalize">{{ user.role }}</p></div>
+            <div><label style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase">Email</label><p style="margin-top:.25rem;font-weight:600">{{ user.email|default:"—" }}</p></div>
+            <div><label style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase">Phone</label><p style="margin-top:.25rem;font-weight:600">{{ user.phone|default:"—" }}</p></div>
+        </div>
+        {% if user.role == 'servant' and user.servant_profile %}
+        <div style="margin-top:2rem;padding-top:1.5rem;border-top:2px solid var(--border)">
+            <h3 style="font-family:'Playfair Display',serif;margin-bottom:1rem">Servant Profile</h3>
+            <p>Status: <span class="badge badge-{{ user.servant_profile.availability_status }}">{{ user.servant_profile.get_availability_status_display }}</span></p>
+            <p style="margin-top:.5rem">Daily Rate: <strong>৳{{ user.servant_profile.daily_rate }}</strong></p>
+            <p style="margin-top:.5rem">Rating: <strong>⭐ {{ user.servant_profile.rating }}/5</strong></p>
+            <a href="/servants/register-profile/" class="btn btn-outline btn-sm" style="margin-top:1rem"><i class="fas fa-edit"></i> Edit Servant Profile</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

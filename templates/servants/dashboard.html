@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Servant Dashboard - Daily Servant{% endblock %}
+{% block extra_css %}
+<style>
+.dashboard{max-width:1100px;margin:2.5rem auto;padding:0 1.5rem}
+.dash-header{background:linear-gradient(135deg,var(--emerald-dark),#134e4a);color:white;border-radius:20px;padding:2rem;margin-bottom:2rem;display:flex;align-items:center;gap:1.5rem}
+.dash-avatar{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:2.5rem;color:white;font-weight:700;flex-shrink:0}
+.dash-name{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:.25rem}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{background:white;border-radius:16px;box-shadow:var(--shadow);padding:1.5rem;text-align:center}
+.stat-val{font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;color:var(--emerald)}
+.stat-lbl{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
+.bookings-table{background:white;border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.table-header{padding:1.5rem;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-header h2{font-family:'Playfair Display',serif;font-size:1.3rem}
+table{width:100%;border-collapse:collapse}
+th{padding:.9rem 1.25rem;background:var(--cream);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;font-weight:700}
+td{padding:1rem 1.25rem;border-bottom:1px solid var(--border);font-size:.875rem;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(13,148,136,.02)}
+.action-btns{display:flex;gap:.4rem;flex-wrap:wrap}
+.not-approved{background:rgba(245,158,11,.08);border:2px dashed var(--gold);border-radius:16px;padding:2rem;text-align:center;margin-bottom:2rem}
+</style>
+{% endblock %}
+{% block content %}
+<div class="dashboard">
+    {% if profile %}
+    <div class="dash-header">
+        <div class="dash-avatar">{{ request.user.first_name|first }}</div>
+        <div>
+            <div class="dash-name">{{ request.user.get_full_name }}</div>
+            <div style="opacity:.85;font-size:.9rem;display:flex;gap:1rem;flex-wrap:wrap">
+                <span>⭐ {{ profile.rating }}/5</span>
+                <span>📍 {{ profile.location|default:"Chittagong" }}</span>
+                <span class="badge badge-{{ profile.availability_status }}" style="font-size:.8rem">{{ profile.get_availability_status_display }}</span>
+                {% if not profile.is_approved %}<span class="badge badge-pending">Pending Approval</span>{% endif %}
+            </div>
+            <div style="margin-top:.75rem;display:flex;gap:.75rem;flex-wrap:wrap">
+                <a href="/servants/register-profile/" class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,.5);color:white"><i class="fas fa-edit"></i> Edit Profile</a>
+                <a href="/servants/{{ profile.id }}/" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:white"><i class="fas fa-eye"></i> View Public Profile</a>
+            </div>
+        </div>
+    </div>
+
+    {% if not profile.is_approved %}
+    <div class="not-approved">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">⏳</div>
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:.5rem">Profile Under Review</h3>
+        <p style="color:var(--muted)">আপনার প্রোফাইল অ্যাডমিনের রিভিউতে আছে। Our admin team will verify your profile shortly. You'll be visible to hirers once approved.</p>
+    </div>
+    {% endif %}
+
+    <div class="stats-row">
+        <div class="stat-card"><div class="stat-val">{{ profile.total_jobs }}</div><div class="stat-lbl">Jobs Completed</div></div>
+        <div class="stat-card"><div class="stat-val">{{ profile.rating }}</div><div class="stat-lbl">Rating / 5</div></div>
+        <div class="stat-card"><div class="stat-val">{{ profile.total_reviews }}</div><div class="stat-lbl">Reviews</div></div>
+        <div class="stat-card"><div class="stat-val">৳{{ profile.daily_rate }}</div><div class="stat-lbl">Daily Rate</div></div>
+    </div>
+
+    <div class="bookings-table">
+        <div class="table-header">
+            <h2>📋 Booking Requests</h2>
+            <span style="font-size:.875rem;color:var(--muted)">{{ bookings|length }} total</span>
+        </div>
+        {% if bookings %}
+        <div style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr><th>Hirer</th><th>Date</th><th>Address</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td><strong>{{ booking.hirer.get_full_name }}</strong><br><small style="color:var(--muted)">{{ booking.hirer.phone }}</small></td>
+                <td><strong>{{ booking.service_date|date:"d M Y" }}</strong></td>
+                <td style="max-width:180px">{{ booking.service_address|truncatechars:60 }}</td>
+                <td><strong>৳{{ booking.total_amount }}</strong></td>
+                <td><span class="badge badge-{{ booking.status }}">{{ booking.get_status_display }}</span></td>
+                <td>
+                    {% if booking.status == 'pending' %}
+                    <form method="post" action="/bookings/respond/{{ booking.id }}/" class="action-btns">
+                        {% csrf_token %}
+                        <button name="action" value="confirm" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Confirm</button>
+                        <button name="action" value="reject" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</button>
+                    </form>
+                    {% elif booking.status == 'confirmed' %}
+                    <form method="post" action="/bookings/respond/{{ booking.id }}/">
+                        {% csrf_token %}
+                        <button name="action" value="complete" class="btn btn-primary btn-sm"><i class="fas fa-flag-checkered"></i> Mark Complete</button>
+                    </form>
+                    {% else %}
+                    <span style="color:var(--muted);font-size:.8rem">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:3rem;color:var(--muted)">
+            <div style="font-size:3rem;margin-bottom:1rem">📭</div>
+            <p>No bookings yet. Make sure your profile is complete and approved!</p>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:4rem 2rem">
+        <div style="font-size:4rem;margin-bottom:1rem">📝</div>
+        <h2 style="font-family:'Playfair Display',serif;margin-bottom:.75rem">Complete Your Profile</h2>
+        <p style="color:var(--muted);margin-bottom:1.5rem">আপনার সার্ভেন্ট প্রোফাইল তৈরি করুন। Set up your servant profile to start receiving bookings.</p>
+        <a href="/servants/register-profile/" class="btn btn-primary" style="padding:.875rem 2rem;font-size:1rem"><i class="fas fa-user-plus"></i> Create Profile</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard - Daily Servant{% endblock %}
+{% block extra_css %}
+<style>
+.admin-layout{max-width:1200px;margin:2.5rem auto;padding:0 1.5rem}
+.admin-header{background:linear-gradient(135deg,#1c1917,#292524);color:white;border-radius:20px;padding:2rem;margin-bottom:2rem;display:flex;align-items:center;justify-content:space-between}
+.admin-header h1{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:.25rem}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{background:white;border-radius:16px;box-shadow:var(--shadow);padding:1.5rem;text-align:center;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.stat-card.green::before{background:linear-gradient(90deg,var(--emerald),var(--emerald-light))}
+.stat-card.gold::before{background:linear-gradient(90deg,var(--gold),#fcd34d)}
+.stat-card.blue::before{background:linear-gradient(90deg,#3b82f6,#93c5fd)}
+.stat-card.red::before{background:linear-gradient(90deg,#ef4444,#fca5a5)}
+.stat-val{font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;color:var(--charcoal)}
+.stat-lbl{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
+.section-card{background:white;border-radius:20px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:2rem}
+.section-card-header{padding:1.5rem;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.section-card-header h2{font-family:'Playfair Display',serif;font-size:1.2rem}
+table{width:100%;border-collapse:collapse}
+th{padding:.9rem 1.25rem;background:var(--cream);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;font-weight:700}
+td{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);font-size:.875rem;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(13,148,136,.02)}
+.pending-servant{background:white;border-radius:14px;border:2px solid rgba(245,158,11,.3);padding:1.25rem;margin-bottom:.75rem;display:flex;align-items:center;gap:1rem}
+.ps-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#d97706);display:flex;align-items:center;justify-content:center;color:white;font-family:'Playfair Display',serif;font-weight:700;font-size:1.3rem;flex-shrink:0}
+.ps-info{flex:1}
+.ps-info h4{font-weight:700;font-size:.95rem;margin-bottom:.2rem}
+.ps-info p{font-size:.8rem;color:var(--muted)}
+.tabs{display:flex;gap:.5rem;padding:1rem 1.5rem;border-bottom:2px solid var(--border);overflow-x:auto}
+.tab{padding:.5rem 1.25rem;border-radius:8px;cursor:pointer;font-size:.875rem;font-weight:600;color:var(--muted);transition:all .2s;white-space:nowrap;border:none;background:none}
+.tab.active,.tab:hover{background:rgba(13,148,136,.1);color:var(--emerald)}
+.tab-content{display:none;padding:1.5rem}
+.tab-content.active{display:block}
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-header">
+        <div>
+            <div style="font-size:.8rem;opacity:.6;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.25rem">Admin Panel</div>
+            <h1>🛡️ Control Center</h1>
+            <p style="opacity:.75;font-size:.9rem">Manage servants, bookings & users</p>
+        </div>
+        <div style="text-align:right">
+            <div style="font-size:.8rem;opacity:.6">Logged in as</div>
+            <div style="font-weight:700">{{ request.user.get_full_name }}</div>
+            <a href="/django-admin/" class="btn btn-sm" style="margin-top:.5rem;background:rgba(255,255,255,.15);color:white">Django Admin</a>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card green">
+            <div class="stat-val">{{ total_users }}</div>
+            <div class="stat-lbl">Total Users</div>
+        </div>
+        <div class="stat-card gold">
+            <div class="stat-val">{{ approved_servants }}</div>
+            <div class="stat-lbl">Active Servants</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-val">{{ pending_servants }}</div>
+            <div class="stat-lbl">Pending Approval</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-val">{{ total_bookings }}</div>
+            <div class="stat-lbl">Total Bookings</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-val">{{ completed_bookings }}</div>
+            <div class="stat-lbl">Completed Jobs</div>
+        </div>
+        <div class="stat-card gold">
+            <div class="stat-val">{{ pending_bookings }}</div>
+            <div class="stat-lbl">Pending Bookings</div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT WITH TABS -->
+    <div class="section-card">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('pending')">⏳ Pending Approvals <span style="background:#ef4444;color:white;border-radius:50%;padding:.1rem .4rem;font-size:.72rem;margin-left:.3rem">{{ pending_servants }}</span></button>
+            <button class="tab" onclick="showTab('bookings')">📋 Recent Bookings</button>
+            <button class="tab" onclick="showTab('users')">👥 All Users</button>
+        </div>
+
+        <!-- PENDING SERVANTS -->
+        <div class="tab-content active" id="tab-pending">
+            {% if pending_servant_list %}
+                {% for servant in pending_servant_list %}
+                <div class="pending-servant">
+                    <div class="ps-avatar">{{ servant.user.first_name|first }}</div>
+                    <div class="ps-info">
+                        <h4>{{ servant.user.get_full_name }}</h4>
+                        <p>
+                            📞 {{ servant.user.phone|default:"No phone" }} ·
+                            📍 {{ servant.location|default:"—" }} ·
+                            ৳{{ servant.daily_rate }}/day ·
+                            {{ servant.experience_years }} yr exp ·
+                            NID: {{ servant.nid_number|default:"Not provided" }}
+                        </p>
+                        <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem">
+                            {% for cat in servant.categories.all %}
+                            <span style="background:rgba(13,148,136,.1);color:var(--emerald);padding:.15rem .5rem;border-radius:6px;font-size:.72rem;font-weight:600">{{ cat.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:.5rem;flex-shrink:0">
+                        <a href="/admin-panel/approve-servant/{{ servant.id }}/" class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i> Approve
+                        </a>
+                        <a href="/django-admin/servants/servantprofile/{{ servant.id }}/delete/" class="btn btn-danger btn-sm">
+                            <i class="fas fa-times"></i> Reject
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div style="text-align:center;padding:3rem;color:var(--muted)">
+                <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
+                <p>No pending approvals! All caught up.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- RECENT BOOKINGS -->
+        <div class="tab-content" id="tab-bookings">
+            <div style="overflow-x:auto">
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Hirer</th><th>Servant</th><th>Date</th><th>Amount</th><th>Status</th><th>Created</th></tr>
+                </thead>
+                <tbody>
+                {% for booking in recent_bookings %}
+                <tr>
+                    <td><strong>#{{ booking.id }}</strong></td>
+                    <td>{{ booking.hirer.get_full_name }}</td>
+                    <td>{{ booking.servant.user.get_full_name }}</td>
+                    <td>{{ booking.service_date|date:"d M Y" }}</td>
+                    <td><strong>৳{{ booking.total_amount }}</strong></td>
+                    <td><span class="badge badge-{{ booking.status }}">{{ booking.get_status_display }}</span></td>
+                    <td style="color:var(--muted)">{{ booking.created_at|date:"d M" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">No bookings yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+
+        <!-- ALL USERS -->
+        <div class="tab-content" id="tab-users">
+            <div style="overflow-x:auto">
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Username</th><th>Role</th><th>Phone</th><th>Verified</th><th>Joined</th></tr>
+                </thead>
+                <tbody>
+                {% for u in all_users %}
+                <tr>
+                    <td><strong>{{ u.get_full_name|default:u.username }}</strong></td>
+                    <td style="color:var(--muted)">@{{ u.username }}</td>
+                    <td>
+                        <span class="badge {% if u.role == 'hirer' %}badge-confirmed{% elif u.role == 'servant' %}badge-available{% else %}badge-pending{% endif %}">
+                            {{ u.role|title }}
+                        </span>
+                    </td>
+                    <td>{{ u.phone|default:"—" }}</td>
+                    <td>{% if u.is_verified %}<span style="color:#10b981">✓ Yes</span>{% else %}<span style="color:#9ca3af">No</span>{% endif %}</td>
+                    <td style="color:var(--muted)">{{ u.date_joined|date:"d M Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">No users yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function showTab(name) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% block title %}Daily Servant - Hire Trusted Help for a Day | ডেইলি সার্ভেন্ট{% endblock %}
+{% block extra_css %}
+<style>
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:#0f766e}
+.hero-bg{position:absolute;inset:0;overflow:hidden}
+.hero-circle{position:absolute;border-radius:50%;opacity:.08}
+.hero-circle-1{width:600px;height:600px;background:white;top:-100px;right:-200px;animation:float1 8s ease-in-out infinite}
+.hero-circle-2{width:400px;height:400px;background:white;bottom:-150px;left:-100px;animation:float2 10s ease-in-out infinite}
+.hero-circle-3{width:200px;height:200px;background:var(--gold);top:40%;left:10%;opacity:.15;animation:float3 6s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.02)}}
+@keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(20px)}}
+@keyframes float3{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-15px) rotate(15deg)}}
+.hero-content{position:relative;z-index:1;text-align:center;color:white;padding:2rem;max-width:800px}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);padding:.5rem 1.25rem;border-radius:50px;font-size:.875rem;margin-bottom:2rem;animation:fadeUp .8s ease .2s both}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,7vw,5rem);line-height:1.1;margin-bottom:1rem;animation:fadeUp .8s ease .4s both}
+.hero h1 em{color:var(--gold);font-style:italic}
+.hero-sub{font-size:clamp(1rem,2.5vw,1.25rem);opacity:.9;margin-bottom:2.5rem;animation:fadeUp .8s ease .6s both;line-height:1.7}
+.hero-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;animation:fadeUp .8s ease .8s both}
+.hero-actions .btn{padding:.875rem 2rem;font-size:1rem}
+.hero-stats{display:flex;gap:2rem;justify-content:center;margin-top:3.5rem;flex-wrap:wrap;animation:fadeUp .8s ease 1s both}
+.hero-stat{text-align:center}
+.hero-stat .num{font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;color:var(--gold)}
+.hero-stat .lbl{font-size:.8rem;opacity:.8;text-transform:uppercase;letter-spacing:.05em}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+/* HOW IT WORKS */
+.section{padding:5rem 2rem}
+.section-header{text-align:center;margin-bottom:3.5rem}
+.section-tag{display:inline-block;background:rgba(13,148,136,.1);color:var(--emerald);font-size:.8rem;font-weight:700;padding:.35rem 1rem;border-radius:50px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.75rem}
+.section-header h2{font-family:'Playfair Display',serif;font-size:clamp(1.75rem,4vw,2.75rem);margin-bottom:.75rem}
+.section-header p{color:var(--muted);max-width:550px;margin:0 auto;font-size:1.05rem}
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2rem;max-width:1000px;margin:0 auto}
+.step-card{text-align:center;padding:2.5rem 1.5rem;position:relative}
+.step-num{width:56px;height:56px;background:linear-gradient(135deg,var(--emerald),var(--emerald-dark));color:white;border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;margin:0 auto 1.25rem}
+.step-card h3{font-weight:700;margin-bottom:.5rem;font-size:1.1rem}
+.step-card p{color:var(--muted);font-size:.9rem}
+.step-arrow{position:absolute;right:-1rem;top:50%;transform:translateY(-50%);color:var(--emerald);opacity:.3;font-size:1.5rem}
+
+/* CATEGORIES */
+.categories-bg{background:white}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;max-width:900px;margin:0 auto}
+.cat-card{padding:2rem 1.5rem;border-radius:20px;text-align:center;cursor:pointer;border:2px solid var(--border);transition:all .3s;text-decoration:none;color:var(--charcoal);background:white}
+.cat-card:hover{border-color:var(--emerald);transform:translateY(-4px);box-shadow:0 15px 40px rgba(13,148,136,.15)}
+.cat-icon{font-size:2.5rem;margin-bottom:1rem;display:block}
+.cat-card h3{font-weight:700;font-size:1rem;margin-bottom:.25rem}
+.cat-card p{font-size:.8rem;color:var(--muted)}
+
+/* SERVANT CARDS */
+.servant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.75rem;max-width:1200px;margin:0 auto}
+.servant-card{border-radius:20px;background:white;box-shadow:var(--shadow);overflow:hidden;transition:all .3s}
+.servant-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+.servant-avatar{height:180px;background:linear-gradient(135deg,#134e4a,var(--emerald));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.servant-avatar img{width:100%;height:100%;object-fit:cover}
+.servant-avatar-placeholder{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:white;font-family:'Playfair Display',serif;font-weight:700}
+.servant-body{padding:1.5rem}
+.servant-name{font-weight:700;font-size:1.1rem;margin-bottom:.25rem}
+.servant-meta{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.8rem;margin-bottom:.75rem;flex-wrap:wrap}
+.servant-cats{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.cat-tag{background:rgba(13,148,136,.1);color:var(--emerald);padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600}
+.servant-footer{display:flex;align-items:center;justify-content:space-between;padding-top:1rem;border-top:1px solid var(--border)}
+.servant-rate{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--charcoal)}
+.servant-rate span{font-size:.75rem;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400}
+
+/* TRUST SECTION */
+.trust-bg{background:linear-gradient(135deg,var(--emerald-dark),#134e4a);color:white;padding:5rem 2rem}
+.trust-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;max-width:900px;margin:0 auto;text-align:center}
+.trust-item .icon{font-size:2.5rem;margin-bottom:1rem;color:var(--gold)}
+.trust-item h3{font-weight:700;margin-bottom:.5rem}
+.trust-item p{opacity:.8;font-size:.9rem}
+
+/* CTA */
+.cta-section{text-align:center;padding:5rem 2rem}
+.cta-section h2{font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3rem);margin-bottom:1rem}
+.cta-section p{color:var(--muted);margin-bottom:2rem;font-size:1.05rem}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-bg">
+        <div class="hero-circle hero-circle-1"></div>
+        <div class="hero-circle hero-circle-2"></div>
+        <div class="hero-circle hero-circle-3"></div>
+    </div>
+    <div class="hero-content">
+        <div class="hero-tag">
+            <span>🇧🇩</span> Bangladesh's trusted daily help platform
+        </div>
+        <h1>Find Trusted Help<br>for <em>Just One Day</em></h1>
+        <p class="hero-sub">
+            বিশ্বস্ত সাহায্যকারী খুঁজুন, মাত্র একদিনের জন্য।<br>
+            Verified servants for cleaning, cooking, childcare & gardening.
+        </p>
+        <div class="hero-actions">
+            <a href="/servants/" class="btn" style="background:var(--gold);color:white;font-size:1rem">
+                <i class="fas fa-search"></i> Browse Servants
+            </a>
+            <a href="/accounts/register/" class="btn btn-outline" style="border-color:rgba(255,255,255,.6);color:white">
+                <i class="fas fa-user-plus"></i> Register Free
+            </a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="num">{{ stats.total_servants }}+</div>
+                <div class="lbl">Verified Servants</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">{{ stats.total_bookings }}+</div>
+                <div class="lbl">Jobs Completed</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">৳{{ stats.total_servants|default:0 }}00+</div>
+                <div class="lbl">Starting Rate / Day</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+    <div class="section-header">
+        <div class="section-tag">How It Works</div>
+        <h2>Simple as 1, 2, 3</h2>
+        <p>Book a trusted servant in minutes. কয়েক মিনিটেই বিশ্বস্ত সার্ভেন্ট বুক করুন।</p>
+    </div>
+    <div class="steps-grid">
+        <div class="step-card card">
+            <div class="step-num">1</div>
+            <h3>Browse & Pick</h3>
+            <p>Search by service type, location, and rating. See profiles and reviews before you decide.</p>
+            <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+        <div class="step-card card">
+            <div class="step-num">2</div>
+            <h3>Book a Date</h3>
+            <p>Choose your service date and address. Servant confirms within hours.</p>
+            <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+        <div class="step-card card">
+            <div class="step-num">3</div>
+            <h3>Pay & Relax</h3>
+            <p>Pay securely via bKash, Nagad, or cash. Get the job done, rate the experience.</p>
+        </div>
+    </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="section categories-bg">
+    <div class="section-header">
+        <div class="section-tag">Services</div>
+        <h2>What We Offer</h2>
+        <p>Skilled helpers across 4 essential home service categories.</p>
+    </div>
+    <div class="cat-grid">
+        {% for cat in categories %}
+        <a href="/servants/?category={{ cat.id }}" class="cat-card">
+            <span class="cat-icon">
+                {% if cat.name == 'House Cleaning' %}🧹
+                {% elif cat.name == 'Cooking' %}🍳
+                {% elif cat.name == 'Childcare' %}👶
+                {% elif cat.name == 'Gardening' %}🌿
+                {% else %}<i class="fas {{ cat.icon }}"></i>{% endif %}
+            </span>
+            <h3>{{ cat.name }}</h3>
+            <p>{{ cat.name_bn }}</p>
+        </a>
+        {% empty %}
+        <a href="/servants/?category=1" class="cat-card"><span class="cat-icon">🧹</span><h3>House Cleaning</h3><p>গৃহ পরিষ্কার</p></a>
+        <a href="/servants/?category=2" class="cat-card"><span class="cat-icon">🍳</span><h3>Cooking</h3><p>রান্না করা</p></a>
+        <a href="/servants/?category=3" class="cat-card"><span class="cat-icon">👶</span><h3>Childcare</h3><p>শিশু পরিচর্যা</p></a>
+        <a href="/servants/?category=4" class="cat-card"><span class="cat-icon">🌿</span><h3>Gardening</h3><p>বাগান করা</p></a>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- FEATURED SERVANTS -->
+{% if featured_servants %}
+<section class="section">
+    <div class="section-header">
+        <div class="section-tag">Top Rated</div>
+        <h2>Featured Servants</h2>
+        <p>Our highest-rated, most experienced helpers — ready to serve.</p>
+    </div>
+    <div class="servant-grid">
+        {% for servant in featured_servants %}
+        <div class="servant-card">
+            <div class="servant-avatar">
+                {% if servant.user.profile_picture %}
+                    <img src="{{ servant.user.profile_picture.url }}" alt="{{ servant.user.get_full_name }}">
+                {% else %}
+                    <div class="servant-avatar-placeholder">{{ servant.user.first_name|first }}</div>
+                {% endif %}
+                <div style="position:absolute;top:1rem;right:1rem">
+                    <span class="badge badge-{{ servant.availability_status }}">
+                        <i class="fas fa-circle" style="font-size:.5rem"></i>
+                        {{ servant.get_availability_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="servant-body">
+                <div class="servant-name">{{ servant.user.get_full_name }}</div>
+                <div class="servant-meta">
+                    <span class="stars">{% for i in "12345" %}{% if forloop.counter <= servant.rating|floatformat:"0"|add:"0" %}★{% else %}☆{% endif %}{% endfor %}</span>
+                    <span>{{ servant.rating }}/5</span>·
+                    <span>{{ servant.total_reviews }} reviews</span>·
+                    <span><i class="fas fa-map-marker-alt"></i> {{ servant.location|default:"Chittagong" }}</span>
+                </div>
+                <div class="servant-cats">
+                    {% for cat in servant.categories.all|slice:":3" %}
+                    <span class="cat-tag">{{ cat.name }}</span>
+                    {% endfor %}
+                </div>
+                <div class="servant-footer">
+                    <div class="servant-rate">৳{{ servant.daily_rate }} <span>/ day</span></div>
+                    <a href="/servants/{{ servant.id }}/" class="btn btn-primary btn-sm">View Profile</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div style="text-align:center;margin-top:2.5rem">
+        <a href="/servants/" class="btn btn-outline">View All Servants <i class="fas fa-arrow-right"></i></a>
+    </div>
+</section>
+{% endif %}
+
+<!-- TRUST -->
+<div class="trust-bg">
+    <div style="text-align:center;margin-bottom:3rem">
+        <div class="section-tag" style="background:rgba(255,255,255,.15);color:white">Why Choose Us</div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.75rem,4vw,2.5rem);margin-top:.75rem">Built on Trust & Safety</h2>
+    </div>
+    <div class="trust-grid">
+        <div class="trust-item"><div class="icon">🛡️</div><h3>Verified Servants</h3><p>Every servant is ID-verified and approved by our admin team before listing.</p></div>
+        <div class="trust-item"><div class="icon">⭐</div><h3>Rated & Reviewed</h3><p>Real reviews from real hirers. Make informed decisions every time.</p></div>
+        <div class="trust-item"><div class="icon">💳</div><h3>Secure Payments</h3><p>Pay safely via bKash, Nagad, or cash. Full transaction records.</p></div>
+        <div class="trust-item"><div class="icon">🎯</div><h3>One-Day Commitment</h3><p>No long contracts. Flexible day-by-day hiring for your convenience.</p></div>
+    </div>
+</div>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="section-tag">Join Today</div>
+    <h2 style="margin-top:.75rem">Ready to Get Started?</h2>
+    <p>Whether you need help or want to earn — Daily Servant is for you.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+        <a href="/accounts/register/" class="btn btn-primary" style="padding:.875rem 2rem;font-size:1rem">
+            <i class="fas fa-user-plus"></i> Hire a Servant
+        </a>
+        <a href="/accounts/register/" class="btn btn-outline" style="padding:.875rem 2rem;font-size:1rem">
+            <i class="fas fa-briefcase"></i> Work as Servant
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animate elements on scroll
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if(entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, {threshold: 0.1});
+document.querySelectorAll('.step-card,.servant-card,.cat-card,.trust-item').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition = 'all 0.6s ease';
+    observer.observe(el);
+});
+</script>
+{% endblock %}

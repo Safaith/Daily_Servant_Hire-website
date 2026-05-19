@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Book {{ servant.user.get_full_name }} - Daily Servant{% endblock %}
+{% block extra_css %}
+<style>
+.book-wrapper{max-width:900px;margin:3rem auto;padding:0 1.5rem;display:grid;grid-template-columns:1fr 320px;gap:2rem}
+.book-form-card{background:white;border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.book-form-header{background:linear-gradient(135deg,#134e4a,var(--emerald));padding:2rem;color:white}
+.book-form-header h1{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:.25rem}
+.book-form-body{padding:2rem}
+.servant-summary{background:white;border-radius:20px;box-shadow:var(--shadow);padding:1.75rem;height:fit-content;position:sticky;top:88px}
+.servant-summary .avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),var(--emerald-dark));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:2rem;color:white;font-weight:700;margin:0 auto 1rem}
+.price-breakdown{background:var(--cream);border-radius:14px;padding:1.25rem;margin-top:1rem}
+.price-row{display:flex;justify-content:space-between;font-size:.875rem;margin-bottom:.5rem}
+.price-row.total{font-weight:700;font-size:1rem;padding-top:.75rem;border-top:2px solid var(--border);margin-top:.5rem}
+@media(max-width:800px){.book-wrapper{grid-template-columns:1fr}.servant-summary{position:static}}
+</style>
+{% endblock %}
+{% block content %}
+<div style="background:linear-gradient(135deg,var(--emerald-dark),#134e4a);padding:3rem 2rem 2rem;color:white;text-align:center">
+    <h1 style="font-family:'Playfair Display',serif;font-size:2.2rem">Book a Servant</h1>
+    <p style="opacity:.85">সার্ভেন্ট বুক করুন</p>
+</div>
+<div class="book-wrapper">
+    <div class="book-form-card">
+        <div class="book-form-header">
+            <h1>Booking Details</h1>
+            <p style="opacity:.85">Fill in when and where you need help.</p>
+        </div>
+        <div class="book-form-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label><i class="fas fa-calendar" style="color:var(--emerald)"></i> Service Date <span style="color:#ef4444">*</span></label>
+                    {{ form.service_date }}
+                    {% if form.service_date.errors %}<ul class="errorlist">{% for e in form.service_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt" style="color:var(--emerald)"></i> Service Address <span style="color:#ef4444">*</span></label>
+                    {{ form.service_address }}
+                    {% if form.service_address.errors %}<ul class="errorlist">{% for e in form.service_address.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-sticky-note" style="color:var(--emerald)"></i> Special Instructions</label>
+                    {{ form.special_instructions }}
+                </div>
+                {% if form.non_field_errors %}
+                <div style="background:#fef2f2;color:#991b1b;padding:.75rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.875rem">
+                    {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+                </div>
+                {% endif %}
+                <div style="background:rgba(13,148,136,.05);border:1px solid rgba(13,148,136,.2);border-radius:12px;padding:1rem;margin-bottom:1.5rem;font-size:.875rem;color:var(--emerald-dark)">
+                    <i class="fas fa-info-circle"></i> After booking, the servant will confirm within a few hours. Payment is required after confirmation.
+                </div>
+                <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;padding:.875rem;font-size:1rem">
+                    <i class="fas fa-calendar-check"></i> Submit Booking Request
+                </button>
+                <a href="/servants/{{ servant.id }}/" class="btn btn-outline" style="width:100%;justify-content:center;margin-top:.75rem">
+                    <i class="fas fa-arrow-left"></i> Back to Profile
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Servant Summary -->
+    <div class="servant-summary">
+        <div class="avatar">{{ servant.user.first_name|first }}</div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;text-align:center;margin-bottom:.25rem">{{ servant.user.get_full_name }}</h3>
+        <p style="text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:1rem">
+            ⭐ {{ servant.rating }}/5 · {{ servant.total_reviews }} reviews
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin-bottom:1rem">
+            {% for cat in servant.categories.all %}
+            <span style="background:rgba(13,148,136,.1);color:var(--emerald);padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600">{{ cat.name }}</span>
+            {% endfor %}
+        </div>
+        <div class="price-breakdown">
+            <div class="price-row"><span>Daily Rate</span><strong>৳{{ servant.daily_rate }}</strong></div>
+            <div class="price-row"><span>Days</span><strong>1</strong></div>
+            <div class="price-row"><span>Service Fee</span><strong>৳0</strong></div>
+            <div class="price-row total"><span>Total</span><span style="color:var(--emerald)">৳{{ servant.daily_rate }}</span></div>
+        </div>
+        <div style="margin-top:1rem;font-size:.78rem;color:var(--muted);text-align:center">
+            <i class="fas fa-shield-alt" style="color:var(--emerald)"></i> Secure booking · ID verified servant
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+// Set minimum date to today
+const dateInput = document.querySelector('input[type="date"]');
+if(dateInput) dateInput.min = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}

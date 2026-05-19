@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}{{ servant.user.get_full_name }} - Daily Servant{% endblock %}
+{% block extra_css %}
+<style>
+.detail-layout{max-width:1100px;margin:2.5rem auto;padding:0 1.5rem;display:grid;grid-template-columns:1fr 340px;gap:2rem}
+.profile-main{background:white;border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.profile-hero{height:220px;background:linear-gradient(135deg,#134e4a,var(--emerald));position:relative;display:flex;align-items:flex-end;padding:1.5rem}
+.avatar-xl{width:100px;height:100px;border-radius:50%;border:4px solid white;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:3rem;color:white;font-weight:700;flex-shrink:0}
+.hero-info{margin-left:1.25rem;color:white}
+.hero-info h1{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:.25rem}
+.hero-info .meta{opacity:.85;font-size:.9rem;display:flex;gap:1rem;flex-wrap:wrap}
+.profile-body{padding:2rem}
+.section-title{font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:.5rem}
+.skills-wrap{display:flex;flex-wrap:wrap;gap:.6rem}
+.skill-chip{background:rgba(13,148,136,.08);color:var(--emerald);padding:.35rem .85rem;border-radius:50px;font-size:.85rem;font-weight:500}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+.stat-box{text-align:center;background:var(--cream);border-radius:14px;padding:1.25rem}
+.stat-box .val{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--emerald)}
+.stat-box .lbl{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+/* BOOKING SIDEBAR */
+.booking-sidebar{height:fit-content;position:sticky;top:88px}
+.book-card{background:white;border-radius:20px;box-shadow:var(--shadow);padding:2rem}
+.book-card h3{font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.25rem}
+.price-big{font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;color:var(--emerald);margin:.75rem 0}
+.price-big small{font-size:1rem;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400}
+/* REVIEWS */
+.review-card{border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:.75rem}
+.review-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.reviewer{font-weight:600;font-size:.9rem}
+.review-date{font-size:.78rem;color:var(--muted)}
+.review-stars{color:var(--gold);font-size:1rem}
+.review-text{color:var(--muted);font-size:.875rem}
+@media(max-width:900px){.detail-layout{grid-template-columns:1fr}.booking-sidebar{position:static}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="detail-layout">
+    <div>
+        <div class="profile-main">
+            <div class="profile-hero">
+                {% if servant.user.profile_picture %}
+                    <img src="{{ servant.user.profile_picture.url }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4">
+                {% endif %}
+                <div style="position:relative;z-index:1;display:flex;align-items:flex-end">
+                    <div class="avatar-xl">{{ servant.user.first_name|first }}</div>
+                    <div class="hero-info">
+                        <h1>{{ servant.user.get_full_name }}</h1>
+                        <div class="meta">
+                            <span>⭐ {{ servant.rating }}/5 ({{ servant.total_reviews }} reviews)</span>
+                            <span>📍 {{ servant.location|default:"Chittagong" }}</span>
+                            <span class="badge badge-{{ servant.availability_status }}">{{ servant.get_availability_status_display }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-body">
+                <div class="stat-row">
+                    <div class="stat-box"><div class="val">{{ servant.total_jobs }}</div><div class="lbl">Jobs Done</div></div>
+                    <div class="stat-box"><div class="val">{{ servant.experience_years }}</div><div class="lbl">Years Exp.</div></div>
+                    <div class="stat-box"><div class="val">{{ servant.rating }}</div><div class="lbl">Rating</div></div>
+                </div>
+
+                <div class="section-title"><span>🎯</span> Services Offered</div>
+                <div class="skills-wrap" style="margin-bottom:2rem">
+                    {% for cat in servant.categories.all %}
+                    <span class="skill-chip">
+                        {% if cat.name == 'House Cleaning' %}🧹{% elif cat.name == 'Cooking' %}🍳{% elif cat.name == 'Childcare' %}👶{% elif cat.name == 'Gardening' %}🌿{% endif %}
+                        {{ cat.name }} / {{ cat.name_bn|default:cat.name }}
+                    </span>
+                    {% endfor %}
+                </div>
+
+                {% if servant.get_skills_list %}
+                <div class="section-title"><span>✨</span> Skills</div>
+                <div class="skills-wrap" style="margin-bottom:2rem">
+                    {% for skill in servant.get_skills_list %}
+                    <span class="skill-chip">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if servant.user.bio %}
+                <div class="section-title"><span>👤</span> About</div>
+                <p style="color:var(--muted);line-height:1.7;margin-bottom:2rem">{{ servant.user.bio }}</p>
+                {% endif %}
+
+                <!-- REVIEWS -->
+                <div class="section-title"><span>⭐</span> Reviews ({{ reviews|length }})</div>
+                {% if can_review %}
+                <div style="background:rgba(13,148,136,.05);border:2px solid rgba(13,148,136,.15);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem">
+                    <h4 style="margin-bottom:1rem;font-size:.95rem">Leave a Review</h4>
+                    <form method="post" action="/api/servants/{{ servant.id }}/review/" id="reviewForm">
+                        {% csrf_token %}
+                        <div style="display:flex;gap:.5rem;margin-bottom:.75rem" id="starPicker">
+                            {% for i in "12345" %}
+                            <span style="font-size:1.8rem;cursor:pointer;color:#d1d5db" data-val="{{ forloop.counter }}" onclick="setRating({{ forloop.counter }})">★</span>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" name="rating" id="ratingInput" value="5">
+                        <textarea name="comment" rows="3" placeholder="Share your experience..." style="width:100%;border:2px solid var(--border);border-radius:10px;padding:.75rem;font-family:'DM Sans',sans-serif;resize:vertical;font-size:.875rem" required></textarea>
+                        <button type="submit" class="btn btn-primary btn-sm" style="margin-top:.75rem"><i class="fas fa-star"></i> Submit Review</button>
+                    </form>
+                </div>
+                {% endif %}
+                {% for review in reviews %}
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="reviewer">{{ review.hirer_name|default:review.hirer.get_full_name }}</div>
+                        <div class="review-date">{{ review.created_at|date:"d M Y" }}</div>
+                    </div>
+                    <div class="review-stars">{% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
+                    <p class="review-text" style="margin-top:.5rem">{{ review.comment }}</p>
+                </div>
+                {% empty %}
+                <p style="color:var(--muted);font-size:.875rem">No reviews yet. Be the first to review!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOKING SIDEBAR -->
+    <div class="booking-sidebar">
+        <div class="book-card">
+            <h3>Book This Servant</h3>
+            <p style="color:var(--muted);font-size:.875rem">সার্ভেন্ট বুক করুন</p>
+            <div class="price-big">৳{{ servant.daily_rate }} <small>/ day</small></div>
+            <div style="background:var(--cream);border-radius:12px;padding:1rem;margin-bottom:1.5rem;font-size:.85rem">
+                <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
+                    <span style="color:var(--muted)">Experience</span>
+                    <strong>{{ servant.experience_years }} years</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
+                    <span style="color:var(--muted)">Jobs Completed</span>
+                    <strong>{{ servant.total_jobs }}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between">
+                    <span style="color:var(--muted)">Availability</span>
+                    <span class="badge badge-{{ servant.availability_status }}">{{ servant.get_availability_status_display }}</span>
+                </div>
+            </div>
+            {% if user.is_authenticated and user.role == 'hirer' %}
+                {% if servant.availability_status == 'available' %}
+                <a href="/bookings/book/{{ servant.id }}/" class="btn btn-gold" style="width:100%;justify-content:center;padding:.875rem;font-size:1rem">
+                    <i class="fas fa-calendar-plus"></i> Book Now
+                </a>
+                {% else %}
+                <button class="btn" style="width:100%;justify-content:center;padding:.875rem;background:#f3f4f6;color:var(--muted);cursor:not-allowed">
+                    <i class="fas fa-clock"></i> Not Available
+                </button>
+                {% endif %}
+            {% elif not user.is_authenticated %}
+            <a href="/accounts/login/?next=/servants/{{ servant.id }}/" class="btn btn-primary" style="width:100%;justify-content:center;padding:.875rem">
+                <i class="fas fa-sign-in-alt"></i> Login to Book
+            </a>
+            {% else %}
+            <div style="text-align:center;color:var(--muted);font-size:.875rem;padding:1rem;background:var(--cream);border-radius:10px">
+                <i class="fas fa-info-circle"></i> Only hirers can book servants.
+            </div>
+            {% endif %}
+            <div style="margin-top:1.25rem;text-align:center;font-size:.78rem;color:var(--muted)">
+                <i class="fas fa-shield-alt" style="color:var(--emerald)"></i> Verified & ID-checked servant
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function setRating(val) {
+    document.getElementById('ratingInput').value = val;
+    document.querySelectorAll('#starPicker span').forEach((s,i) => {
+        s.style.color = i < val ? '#f59e0b' : '#d1d5db';
+    });
+}
+setRating(5);
+</script>
+{% endblock %}

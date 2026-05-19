@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}My Bookings - Daily Servant{% endblock %}
+{% block extra_css %}
+<style>
+.dashboard{max-width:1100px;margin:2.5rem auto;padding:0 1.5rem}
+.dash-top{background:linear-gradient(135deg,var(--emerald-dark),#134e4a);color:white;border-radius:20px;padding:2rem;margin-bottom:2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:gap}
+.dash-top h1{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:.25rem}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{background:white;border-radius:16px;box-shadow:var(--shadow);padding:1.5rem;text-align:center}
+.stat-val{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;color:var(--emerald)}
+.stat-lbl{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
+.bookings-list{display:flex;flex-direction:column;gap:1rem}
+.booking-card{background:white;border-radius:18px;box-shadow:var(--shadow);overflow:hidden;transition:all .2s}
+.booking-card:hover{box-shadow:var(--shadow-lg)}
+.booking-card-inner{display:grid;grid-template-columns:auto 1fr auto;gap:1.25rem;padding:1.5rem;align-items:center}
+.servant-mini-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),var(--emerald-dark));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.5rem;color:white;font-weight:700;flex-shrink:0}
+.booking-info h3{font-weight:700;font-size:1rem;margin-bottom:.25rem}
+.booking-meta{display:flex;gap:.75rem;color:var(--muted);font-size:.8rem;flex-wrap:wrap}
+.booking-actions{display:flex;flex-direction:column;gap:.5rem;align-items:flex-end;min-width:140px}
+.booking-amount{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--charcoal);text-align:right;margin-bottom:.25rem}
+@media(max-width:700px){.booking-card-inner{grid-template-columns:auto 1fr;}.booking-actions{grid-column:1/-1;align-items:flex-start;flex-direction:row}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="dashboard">
+    <div class="dash-top">
+        <div>
+            <h1>My Bookings</h1>
+            <p style="opacity:.85">আমার বুকিং · Track all your servant bookings here.</p>
+        </div>
+        <a href="/servants/" class="btn btn-gold"><i class="fas fa-plus"></i> New Booking</a>
+    </div>
+
+    {% with total=bookings|length pending=bookings|length confirmed=bookings|length %}
+    <div class="stats-row">
+        <div class="stat-card"><div class="stat-val">{{ bookings|length }}</div><div class="stat-lbl">Total Bookings</div></div>
+        <div class="stat-card"><div class="stat-val">{{ bookings|length }}</div><div class="stat-lbl">This Month</div></div>
+    </div>
+    {% endwith %}
+
+    <div class="bookings-list">
+        {% for booking in bookings %}
+        <div class="booking-card">
+            <div class="booking-card-inner">
+                <div class="servant-mini-avatar">{{ booking.servant.user.first_name|first }}</div>
+                <div class="booking-info">
+                    <h3>{{ booking.servant.user.get_full_name }}</h3>
+                    <div class="booking-meta">
+                        <span><i class="fas fa-calendar"></i> {{ booking.service_date|date:"d M Y" }}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> {{ booking.service_address|truncatechars:40 }}</span>
+                        <span><i class="fas fa-clock"></i> Booked {{ booking.created_at|date:"d M" }}</span>
+                    </div>
+                    {% if booking.special_instructions %}
+                    <p style="margin-top:.4rem;font-size:.8rem;color:var(--muted);font-style:italic">"{{ booking.special_instructions|truncatechars:80 }}"</p>
+                    {% endif %}
+                </div>
+                <div class="booking-actions">
+                    <div class="booking-amount">৳{{ booking.total_amount }}</div>
+                    <span class="badge badge-{{ booking.status }}">{{ booking.get_status_display }}</span>
+                    {% if booking.status == 'confirmed' %}
+                        {% if booking.payment.status == 'completed' %}
+                            <span style="color:#10b981;font-size:.8rem"><i class="fas fa-check-circle"></i> Paid</span>
+                        {% else %}
+                            <a href="/payments/{{ booking.id }}/" class="btn btn-gold btn-sm"><i class="fas fa-credit-card"></i> Pay Now</a>
+                        {% endif %}
+                    {% elif booking.status == 'pending' %}
+                        <a href="/bookings/cancel/{{ booking.id }}/" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Cancel this booking?')">
+                           <i class="fas fa-times"></i> Cancel
+                        </a>
+                    {% elif booking.status == 'completed' %}
+                        <a href="/servants/{{ booking.servant.id }}/" class="btn btn-outline btn-sm"><i class="fas fa-star"></i> Review</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:4rem;background:white;border-radius:20px;box-shadow:var(--shadow)">
+            <div style="font-size:4rem;margin-bottom:1rem">📅</div>
+            <h3 style="font-family:'Playfair Display',serif;margin-bottom:.5rem">No Bookings Yet</h3>
+            <p style="color:var(--muted);margin-bottom:1.5rem">এখনো কোনো বুকিং নেই। Start by finding a servant for your needs.</p>
+            <a href="/servants/" class="btn btn-primary" style="padding:.875rem 2rem"><i class="fas fa-search"></i> Browse Servants</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

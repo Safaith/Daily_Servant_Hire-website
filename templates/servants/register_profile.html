@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Register Servant Profile - Daily Servant{% endblock %}
+{% block extra_css %}
+<style>
+.form-wrapper{max-width:700px;margin:3rem auto;padding:0 1.5rem}
+.form-card{background:white;border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.form-card-header{background:linear-gradient(135deg,var(--emerald-dark),#134e4a);padding:2rem 2.5rem;color:white}
+.form-card-header h1{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:.25rem}
+.form-card-body{padding:2.5rem}
+.cat-checkboxes{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.5rem}
+.cat-check-label{display:flex;align-items:center;gap:.75rem;padding:.9rem 1rem;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;font-weight:500;font-size:.9rem}
+.cat-check-label:hover{border-color:var(--emerald);background:rgba(13,148,136,.04)}
+.cat-check-label input{accent-color:var(--emerald);width:18px;height:18px}
+.cat-check-label.checked{border-color:var(--emerald);background:rgba(13,148,136,.06);color:var(--emerald-dark)}
+</style>
+{% endblock %}
+{% block content %}
+<div class="form-wrapper">
+    <div class="form-card">
+        <div class="form-card-header">
+            <h1>{% if profile %}Update{% else %}Create{% endif %} Servant Profile</h1>
+            <p style="opacity:.85">আপনার সার্ভেন্ট প্রোফাইল তৈরি করুন। Fill in your details to start getting booked.</p>
+        </div>
+        <div class="form-card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Services You Offer <span style="color:#ef4444">*</span></label>
+                    <div class="cat-checkboxes">
+                        {% for cat in form.categories.field.queryset %}
+                        <label class="cat-check-label" id="cat-{{ cat.id }}">
+                            <input type="checkbox" name="categories" value="{{ cat.id }}"
+                                {% if cat.id|stringformat:"s" in selected_categories %}checked{% endif %}
+                                onchange="toggleCat(this, 'cat-{{ cat.id }}')">
+                            <span>
+                                {% if cat.name == 'House Cleaning' %}🧹{% elif cat.name == 'Cooking' %}🍳{% elif cat.name == 'Childcare' %}👶{% elif cat.name == 'Gardening' %}🌿{% endif %}
+                                {{ cat.name }}
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% if form.categories.errors %}<ul class="errorlist">{% for e in form.categories.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                    <div class="form-group">
+                        <label>Daily Rate (৳) <span style="color:#ef4444">*</span></label>
+                        {{ form.daily_rate }}
+                        <small style="color:var(--muted);font-size:.78rem">Minimum recommended: ৳300</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Years of Experience</label>
+                        {{ form.experience_years }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Your Skills</label>
+                    {{ form.skills }}
+                    <small style="color:var(--muted);font-size:.78rem">e.g. Bengali cooking, infant care, lawn mowing</small>
+                </div>
+                <div class="form-group">
+                    <label>Your Location / এলাকা</label>
+                    {{ form.location }}
+                </div>
+                <div class="form-group">
+                    <label>National ID Number (NID)</label>
+                    {{ form.nid_number }}
+                    <small style="color:var(--muted);font-size:.78rem">Required for verification. Kept confidential.</small>
+                </div>
+                {% if form.non_field_errors %}
+                <div style="background:#fef2f2;color:#991b1b;padding:.75rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.875rem">
+                    {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+                </div>
+                {% endif %}
+                <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:1rem;margin-bottom:1.5rem;font-size:.875rem;color:#92400e">
+                    <i class="fas fa-info-circle"></i> After submitting, an admin will review and approve your profile before it goes live.
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.875rem;font-size:1rem">
+                    <i class="fas fa-paper-plane"></i> Submit Profile for Approval
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleCat(checkbox, labelId) {
+    document.getElementById(labelId).classList.toggle('checked', checkbox.checked);
+}
+document.querySelectorAll('.cat-check-label input:checked').forEach(cb => {
+    cb.closest('.cat-check-label').classList.add('checked');
+});
+</script>
+{% endblock %}
